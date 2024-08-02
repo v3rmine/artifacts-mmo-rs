@@ -2,15 +2,23 @@ pub mod endpoints;
 pub mod rate_limits;
 pub mod schemas;
 
-mod errors;
-pub use errors::Error;
-
 use http::{uri::PathAndQuery, HeaderMap, Method, Request};
+use thiserror::Error;
 
 use self::rate_limits::RateLimit;
 
 pub const API_VERSION: &str = "v1.3";
-pub const API_BASE_URL: &str = "https://api.artifactsmmo.com/";
+pub const API_BASE_URL: &str = "https://api.artifactsmmo.com";
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Failed to parse header value: {0}")]
+    InvalidHeaderValue(#[from] http::header::InvalidHeaderValue),
+    #[error("Invalid input: {0}")]
+    InvalidStringInput(String),
+    #[error("Failed to parse JSON: {0}")]
+    ParseJson(#[from] serde_json::Error),
+}
 
 #[derive(Debug, Clone)]
 pub struct EncodedRequest {

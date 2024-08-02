@@ -39,3 +39,10 @@ pub const ACTIONS_RATE_LIMIT: RateLimit<'_> = RateLimit {
     by: RateLimitBy::Ip,
     requests_limits: &[LimitPer::Seconds(5), LimitPer::Hours(7200)],
 };
+/// Why don't we just use None? It's to make it easier to use and allow to easily change to add
+/// sane rate limits for requests without it
+pub const NO_RATE_LIMIT: RateLimit<'_> = RateLimit {
+    id: "NONE",
+    by: RateLimitBy::Ip,
+    requests_limits: &[],
+};

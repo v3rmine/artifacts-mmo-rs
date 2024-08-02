@@ -1,11 +1,25 @@
-mod accounts;
-mod events;
-mod grand_exchange;
-mod items;
-mod maps;
-mod monsters;
-mod my_account;
-mod my_characters;
-mod resources;
-mod server;
-mod token;
+#![allow(unused_imports)]
+
+macro_rules! pub_mod_use {
+    ($($name:ident),+) => {
+        $(
+        mod $name;
+        pub use $name::*;
+        )+
+    };
+}
+
+pub_mod_use! {
+    server,
+    my_characters,
+    my_account,
+    characters,
+    maps,
+    items,
+    monsters,
+    resources,
+    events,
+    grand_exchange,
+    accounts,
+    token
+}
