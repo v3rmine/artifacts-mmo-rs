@@ -18,5 +18,11 @@ pub_mod_use! {
     event,
     resource,
     skill,
-    drop_rate
+    drop_rate,
+    monster,
+    item,
+    single_item,
+    item_effect,
+    craft,
+    simple_item
 }
