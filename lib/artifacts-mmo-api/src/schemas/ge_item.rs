@@ -1,18 +1,10 @@
-use serde::Serialize;
+use serde::Deserialize;
 
-#[derive(Debug, Clone, Serialize)]
-pub struct GEItemResponse {
-    data: Vec<GEItemSchema>,
-    total: u32,
-    page: u32,
-    size: u32,
-    pages: u32,
-}
-
-#[derive(Debug, Clone, Serialize)]
+/// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_ge_item_ge__code__get>
+#[derive(Debug, Clone, Deserialize)]
 pub struct GEItemSchema {
-    code: String,
-    stock: u32,
-    sell_price: u32,
-    buy_price: u32,
+    pub code: String,
+    pub stock: u32,
+    pub sell_price: u32,
+    pub buy_price: u32,
 }

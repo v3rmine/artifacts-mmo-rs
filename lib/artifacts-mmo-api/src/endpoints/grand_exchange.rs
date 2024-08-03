@@ -1,17 +1,27 @@
-use std::str::FromStr;
+use std::{marker::PhantomData, str::FromStr};
 
 use http::{header::ACCEPT, uri::PathAndQuery, HeaderMap, HeaderValue, Method};
 use nutype::nutype;
 
-use crate::{helpers::ACCEPT_JSON, rate_limits::DATA_RATE_LIMIT, EncodedRequest};
+use crate::{
+    helpers::ACCEPT_JSON,
+    rate_limits::DATA_RATE_LIMIT,
+    schemas::{GEItemSchema, PaginatedResponseSchema, ResponseSchema},
+    EncodedRequest, ParseResponse,
+};
 
 #[nutype(validate(greater_or_equal = 1))]
 struct Page(u32);
 #[nutype(validate(greater_or_equal = 1, less_or_equal = 100))]
 struct Size(u32);
 
+struct GetAllGEItemsRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_ge_items_ge__get>
-pub fn get_all_ge_items(page: u32, size: u32) -> Result<EncodedRequest, crate::Error> {
+#[tracing::instrument(level = "trace")]
+pub fn get_all_ge_items(
+    page: u32,
+    size: u32,
+) -> Result<EncodedRequest<GetAllGEItemsRequest>, crate::Error> {
     let page = Page::try_new(page)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -25,14 +35,23 @@ pub fn get_all_ge_items(page: u32, size: u32) -> Result<EncodedRequest, crate::E
         headers: HeaderMap::from_iter([ACCEPT_JSON]),
         content: Vec::new(),
         rate_limit: DATA_RATE_LIMIT,
+        marker: PhantomData,
     })
+}
+
+impl<'de> ParseResponse<'de> for EncodedRequest<GetAllGEItemsRequest> {
+    type Response = PaginatedResponseSchema<GEItemSchema>;
 }
 
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
 struct Code(String);
 
+struct GetGEItemRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_ge_item_ge__code__get>
-pub fn get_ge_item(code: impl AsRef<str>) -> Result<EncodedRequest, crate::Error> {
+#[tracing::instrument(level = "trace", skip_all)]
+pub fn get_ge_item(
+    code: impl AsRef<str>,
+) -> Result<EncodedRequest<GetGEItemRequest>, crate::Error> {
     let code = Code::try_new(code.as_ref())
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -43,7 +62,12 @@ pub fn get_ge_item(code: impl AsRef<str>) -> Result<EncodedRequest, crate::Error
         headers: HeaderMap::from_iter([ACCEPT_JSON]),
         content: Vec::new(),
         rate_limit: DATA_RATE_LIMIT,
+        marker: PhantomData,
     })
+}
+
+impl<'de> ParseResponse<'de> for EncodedRequest<GetGEItemRequest> {
+    type Response = ResponseSchema<GEItemSchema>;
 }
 
 #[cfg(test)]

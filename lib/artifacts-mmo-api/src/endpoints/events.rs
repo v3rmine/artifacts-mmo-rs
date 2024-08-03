@@ -1,16 +1,27 @@
-use std::str::FromStr;
+use std::{marker::PhantomData, str::FromStr};
 
 use http::{uri::PathAndQuery, HeaderMap, Method};
 use nutype::nutype;
 
-use crate::{helpers::ACCEPT_JSON, rate_limits::DATA_RATE_LIMIT, EncodedRequest};
+use crate::{
+    helpers::ACCEPT_JSON,
+    rate_limits::DATA_RATE_LIMIT,
+    schemas::{EventSchema, PaginatedResponseSchema},
+    EncodedRequest, ParseResponse,
+};
 
 #[nutype(validate(greater_or_equal = 1))]
 struct Page(u32);
 #[nutype(validate(greater_or_equal = 1, less_or_equal = 100))]
 struct Size(u32);
 
-pub fn get_all_events(page: u32, size: u32) -> Result<EncodedRequest, crate::Error> {
+pub struct GetAllEventsRequest;
+/// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_events_events__get>
+#[tracing::instrument(level = "trace")]
+pub fn get_all_events(
+    page: u32,
+    size: u32,
+) -> Result<EncodedRequest<GetAllEventsRequest>, crate::Error> {
     let page = Page::try_new(page)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -24,7 +35,12 @@ pub fn get_all_events(page: u32, size: u32) -> Result<EncodedRequest, crate::Err
         headers: HeaderMap::from_iter([ACCEPT_JSON]),
         content: Vec::new(),
         rate_limit: DATA_RATE_LIMIT,
+        marker: PhantomData,
     })
+}
+
+impl<'de> ParseResponse<'de> for GetAllEventsRequest {
+    type Response = PaginatedResponseSchema<EventSchema>;
 }
 
 #[cfg(test)]

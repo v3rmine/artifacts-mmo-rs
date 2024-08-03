@@ -3,7 +3,10 @@ mod helpers;
 pub mod rate_limits;
 pub mod schemas;
 
+use std::marker::PhantomData;
+
 use http::{uri::PathAndQuery, HeaderMap, Method, Request};
+use serde::Deserialize;
 use thiserror::Error;
 
 use self::rate_limits::RateLimit;
@@ -24,7 +27,7 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone)]
-pub struct EncodedRequest {
+pub struct EncodedRequest<T> {
     pub method: Method,
     pub path: PathAndQuery,
     pub headers: HeaderMap,
@@ -32,12 +35,21 @@ pub struct EncodedRequest {
     pub content: Vec<u8>,
     // Rate limit is part of the API definition so we know it at comptime
     pub rate_limit: RateLimit<'static>,
+    marker: PhantomData<T>,
 }
 
-impl TryFrom<EncodedRequest> for Request<Vec<u8>> {
+pub trait ParseResponse<'de> {
+    type Response: Deserialize<'de>;
+
+    fn parse_response(response: &'de [u8]) -> Result<Self::Response, Error> {
+        Ok(serde_json::from_slice(response)?)
+    }
+}
+
+impl<T> TryFrom<EncodedRequest<T>> for Request<Vec<u8>> {
     type Error = http::Error;
 
-    fn try_from(value: EncodedRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: EncodedRequest<T>) -> Result<Self, Self::Error> {
         let request = Request::builder().method(&value.method).uri(value.path);
 
         let request = value

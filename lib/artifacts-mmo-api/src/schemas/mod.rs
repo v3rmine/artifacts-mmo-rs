@@ -14,5 +14,9 @@ pub_mod_use! {
     response,
     status,
     announcement,
-    ge_item
+    ge_item,
+    event,
+    resource,
+    skill,
+    drop_rate
 }

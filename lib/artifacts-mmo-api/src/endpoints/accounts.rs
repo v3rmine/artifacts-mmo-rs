@@ -1,15 +1,18 @@
+use std::marker::PhantomData;
+
 use http::{
     header::{ACCEPT, CONTENT_TYPE},
     uri::PathAndQuery,
     HeaderMap, HeaderValue, Method,
 };
 use nutype::nutype;
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::{
     helpers::{ACCEPT_JSON, CONTENT_TYPE_JSON},
     rate_limits::ACCOUNT_CREATION_RATE_LIMIT,
-    EncodedRequest,
+    EncodedRequest, ParseResponse,
 };
 
 #[nutype(validate(
@@ -24,12 +27,14 @@ struct Password(String);
 #[nutype(validate(not_empty, regex = "^\\w+@\\w+\\.\\w+$"))]
 struct Email(String);
 
+pub struct CreateAccountRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/create_account_accounts_create_post>
+#[tracing::instrument(level = "trace", skip_all)]
 pub fn create_account(
     username: impl AsRef<str>,
     password: impl AsRef<str>,
     email: impl AsRef<str>,
-) -> Result<EncodedRequest, crate::Error> {
+) -> Result<EncodedRequest<CreateAccountRequest>, crate::Error> {
     let username = Username::try_new(username.as_ref())
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -50,7 +55,17 @@ pub fn create_account(
             "email": email
         }))?,
         rate_limit: ACCOUNT_CREATION_RATE_LIMIT,
+        marker: PhantomData,
     })
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateAccountResponse {
+    pub message: String,
+}
+
+impl<'de> ParseResponse<'de> for EncodedRequest<CreateAccountRequest> {
+    type Response = CreateAccountResponse;
 }
 
 #[cfg(test)]
