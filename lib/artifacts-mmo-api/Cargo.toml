@@ -24,6 +24,8 @@ serde_json.workspace = true
 chrono.workspace = true
 # serialize enums to string
 strum.workspace = true
+# ease the usage of the requests
+typed-builder.workspace = true
 
 [dev-dependencies]
 # woohoo testing things

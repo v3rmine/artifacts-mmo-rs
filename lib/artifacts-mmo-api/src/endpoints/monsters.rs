@@ -2,6 +2,7 @@ use std::{marker::PhantomData, str::FromStr};
 
 use http::{uri::PathAndQuery, HeaderMap, Method};
 use nutype::nutype;
+use typed_builder::TypedBuilder;
 
 use crate::{
     helpers::ACCEPT_JSON,
@@ -19,15 +20,29 @@ struct Size(u32);
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
 struct Drop(String);
 
-struct GetAllMonstersRequest;
+#[derive(TypedBuilder)]
+struct GetAllMonstersRequest {
+    #[builder(default = 1)]
+    page: u32,
+    #[builder(default = 50)]
+    size: u32,
+    #[builder(default, setter(into))]
+    drop: Option<String>,
+    #[builder(default)]
+    max_level: Option<u32>,
+    #[builder(default)]
+    min_level: Option<u32>,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_monsters_monsters__get>
 #[tracing::instrument(level = "trace")]
 pub fn get_all_monsters(
-    drop: Option<&str>,
-    max_level: Option<u32>,
-    min_level: Option<u32>,
-    page: u32,
-    size: u32,
+    GetAllMonstersRequest {
+        page,
+        size,
+        drop,
+        max_level,
+        min_level,
+    }: GetAllMonstersRequest,
 ) -> Result<EncodedRequest<GetAllMonstersRequest>, crate::Error> {
     let page = Page::try_new(page)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
@@ -68,10 +83,16 @@ impl<'de> ParseResponse<'de> for EncodedRequest<GetAllMonstersRequest> {
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
 struct Code(String);
 
-struct GetMonsterRequest;
+#[derive(TypedBuilder)]
+struct GetMonsterRequest {
+    #[builder(setter(into))]
+    code: String,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_monster_monsters__code__get>
 #[tracing::instrument(level = "trace")]
-pub fn get_monster(code: &str) -> Result<EncodedRequest<GetMonsterRequest>, crate::Error> {
+pub fn get_monster(
+    GetMonsterRequest { code }: GetMonsterRequest,
+) -> Result<EncodedRequest<GetMonsterRequest>, crate::Error> {
     let code = Code::try_new(code)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -99,13 +120,20 @@ mod tests {
             page in 1u32..=u32::MAX,
             size in 1u32..=50,
         ) {
-            assert!(super::get_all_monsters(None, None, None, page, size).is_ok());
+            let request = super::GetAllMonstersRequest::builder()
+                .page(page)
+                .size(size)
+                .build();
+            assert!(super::get_all_monsters(request).is_ok());
         }
         #[test]
         fn get_monster_should_work_with_valid_input(
             code in "[a-zA-Z0-9_-]+"
         ) {
-            assert!(super::get_monster(&code).is_ok());
+            let request = super::GetMonsterRequest::builder()
+                .code(code)
+                .build();
+            assert!(super::get_monster(request).is_ok());
         }
     }
 }

@@ -8,6 +8,7 @@ use http::{
 use nutype::nutype;
 use serde::Deserialize;
 use serde_json::json;
+use typed_builder::TypedBuilder;
 
 use crate::{
     helpers::{ACCEPT_JSON, CONTENT_TYPE_JSON},
@@ -27,13 +28,20 @@ struct Password(String);
 #[nutype(validate(not_empty, regex = "^\\w+@\\w+\\.\\w+$"))]
 struct Email(String);
 
-pub struct CreateAccountRequest;
+#[derive(TypedBuilder)]
+pub struct CreateAccountRequest {
+    username: String,
+    password: String,
+    email: String,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/create_account_accounts_create_post>
 #[tracing::instrument(level = "trace", skip_all)]
 pub fn create_account(
-    username: &str,
-    password: &str,
-    email: &str,
+    CreateAccountRequest {
+        username,
+        password,
+        email,
+    }: CreateAccountRequest,
 ) -> Result<EncodedRequest<CreateAccountRequest>, crate::Error> {
     let username = Username::try_new(username)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
@@ -81,7 +89,12 @@ mod tests {
                 .prop_filter("at least 5 chars and at most 50", |v| v.chars().count() >= 5 && v.chars().count() <= 50),
             email in "\\w+@\\w+\\.\\w+"
         ) {
-            assert!(super::create_account(&username, &password, &email).is_ok());
+            let request = super::CreateAccountRequest::builder()
+                .username(username)
+                .password(password)
+                .email(email)
+                .build();
+            assert!(super::create_account(request).is_ok());
         }
     }
 }

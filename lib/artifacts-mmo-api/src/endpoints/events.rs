@@ -1,7 +1,8 @@
-use std::{marker::PhantomData, str::FromStr};
+use std::{default, marker::PhantomData, str::FromStr};
 
 use http::{uri::PathAndQuery, HeaderMap, Method};
 use nutype::nutype;
+use typed_builder::TypedBuilder;
 
 use crate::{
     helpers::ACCEPT_JSON,
@@ -15,12 +16,17 @@ struct Page(u32);
 #[nutype(validate(greater_or_equal = 1, less_or_equal = 100))]
 struct Size(u32);
 
-pub struct GetAllEventsRequest;
+#[derive(TypedBuilder)]
+pub struct GetAllEventsRequest {
+    #[builder(default = 1)]
+    page: u32,
+    #[builder(default = 50)]
+    size: u32,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_events_events__get>
 #[tracing::instrument(level = "trace")]
 pub fn get_all_events(
-    page: u32,
-    size: u32,
+    GetAllEventsRequest { page, size }: GetAllEventsRequest,
 ) -> Result<EncodedRequest<GetAllEventsRequest>, crate::Error> {
     let page = Page::try_new(page)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
@@ -52,7 +58,11 @@ mod tests {
             page in 1u32..=u32::MAX,
             size in 1u32..=50
         ) {
-            assert!(super::get_all_events(page, size).is_ok());
+            let request = super::GetAllEventsRequest::builder()
+                .page(page)
+                .size(size)
+                .build();
+            assert!(super::get_all_events(request).is_ok());
         }
     }
 }
