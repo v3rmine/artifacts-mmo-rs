@@ -22,6 +22,7 @@ serde.workspace = true
 serde_json.workspace = true
 # to manipulate dates
 chrono.workspace = true
+strum = { version = "0.26.3", features = ["derive"] }
 
 [dev-dependencies]
 # woohoo testing things
