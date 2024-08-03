@@ -48,11 +48,9 @@ struct Code(String);
 
 struct GetGEItemRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_ge_item_ge__code__get>
-#[tracing::instrument(level = "trace", skip_all)]
-pub fn get_ge_item(
-    code: impl AsRef<str>,
-) -> Result<EncodedRequest<GetGEItemRequest>, crate::Error> {
-    let code = Code::try_new(code.as_ref())
+#[tracing::instrument(level = "trace")]
+pub fn get_ge_item(code: &str) -> Result<EncodedRequest<GetGEItemRequest>, crate::Error> {
+    let code = Code::try_new(code)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
 
@@ -85,7 +83,7 @@ mod tests {
         fn get_ge_item_should_work_with_valid_input(
             code in "[a-zA-Z0-9_-]+"
         ) {
-            assert!(super::get_ge_item(code).is_ok());
+            assert!(super::get_ge_item(&code).is_ok());
         }
     }
 }

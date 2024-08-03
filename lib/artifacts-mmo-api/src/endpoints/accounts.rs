@@ -31,17 +31,17 @@ pub struct CreateAccountRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/create_account_accounts_create_post>
 #[tracing::instrument(level = "trace", skip_all)]
 pub fn create_account(
-    username: impl AsRef<str>,
-    password: impl AsRef<str>,
-    email: impl AsRef<str>,
+    username: &str,
+    password: &str,
+    email: &str,
 ) -> Result<EncodedRequest<CreateAccountRequest>, crate::Error> {
-    let username = Username::try_new(username.as_ref())
+    let username = Username::try_new(username)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
-    let password = Password::try_new(password.as_ref())
+    let password = Password::try_new(password)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
-    let email = Email::try_new(email.as_ref())
+    let email = Email::try_new(email)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
 
@@ -81,7 +81,7 @@ mod tests {
                 .prop_filter("at least 5 chars and at most 50", |v| v.chars().count() >= 5 && v.chars().count() <= 50),
             email in "\\w+@\\w+\\.\\w+"
         ) {
-            assert!(super::create_account(username, password, email).is_ok());
+            assert!(super::create_account(&username, &password, &email).is_ok());
         }
     }
 }

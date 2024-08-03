@@ -14,11 +14,14 @@ use crate::{
 struct Page(u32);
 #[nutype(validate(greater_or_equal = 1, less_or_equal = 100))]
 struct Size(u32);
+#[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
+struct Drop(String);
 
 struct GetAllResourcesRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_resources_resources__get>
 #[tracing::instrument(level = "trace")]
 pub fn get_all_resources(
+    drop: Option<&str>,
     max_level: Option<u32>,
     min_level: Option<u32>,
     skill: Option<SkillSchema>,
@@ -33,6 +36,12 @@ pub fn get_all_resources(
         .into_inner();
 
     let mut query = Vec::new();
+    if let Some(drop) = drop {
+        let drop = Drop::try_new(drop)
+            .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
+            .into_inner();
+        query.push(format!("drop={drop}"));
+    }
     if let Some(max_level) = max_level {
         query.push(format!("max_level={max_level}"));
     }
@@ -63,11 +72,9 @@ struct Code(String);
 
 struct GetResourceRequest;
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_resources_resources__code__get>
-#[tracing::instrument(level = "trace", skip_all)]
-pub fn get_resource(
-    code: impl AsRef<str>,
-) -> Result<EncodedRequest<GetResourceRequest>, crate::Error> {
-    let code = Code::try_new(code.as_ref())
+#[tracing::instrument(level = "trace")]
+pub fn get_resource(code: &str) -> Result<EncodedRequest<GetResourceRequest>, crate::Error> {
+    let code = Code::try_new(code)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
 
@@ -92,15 +99,15 @@ mod tests {
         #[test]
         fn get_all_resources_should_work_with_valid_input(
             page in 1u32..=u32::MAX,
-            size in 1u32..=50
+            size in 1u32..=50,
         ) {
-            assert!(super::get_all_resources(None, None, None, page, size).is_ok());
+            assert!(super::get_all_resources(None, None, None, None, page, size).is_ok());
         }
         #[test]
         fn get_resource_should_work_with_valid_input(
             code in "[a-zA-Z0-9_-]+"
         ) {
-            assert!(super::get_resource(code).is_ok());
+            assert!(super::get_resource(&code).is_ok());
         }
     }
 }
