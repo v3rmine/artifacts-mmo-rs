@@ -1,4 +1,5 @@
 pub mod endpoints;
+mod helpers;
 pub mod rate_limits;
 pub mod schemas;
 
@@ -14,8 +15,10 @@ pub const API_BASE_URL: &str = "https://api.artifactsmmo.com";
 pub enum Error {
     #[error("Failed to parse header value: {0}")]
     InvalidHeaderValue(#[from] http::header::InvalidHeaderValue),
+    #[error("Failed to parse URI: {0}")]
+    InvalidUri(#[from] http::uri::InvalidUri),
     #[error("Invalid input: {0}")]
-    InvalidStringInput(String),
+    InvalidInput(String),
     #[error("Failed to parse JSON: {0}")]
     ParseJson(#[from] serde_json::Error),
 }

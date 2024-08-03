@@ -18,7 +18,10 @@ thiserror.workspace = true
 # logging method calls
 tracing.workspace = true
 # to parse and construct json
+serde.workspace = true
 serde_json.workspace = true
+# to manipulate dates
+chrono.workspace = true
 
 [dev-dependencies]
 # woohoo testing things

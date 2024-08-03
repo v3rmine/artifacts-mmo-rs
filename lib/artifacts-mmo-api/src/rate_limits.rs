@@ -10,8 +10,8 @@ pub struct RateLimit<'a> {
 
 #[derive(Debug, Clone)]
 pub enum LimitPer {
-    Hours(u64),
-    Seconds(u64),
+    Hours(u32),
+    Seconds(u32),
 }
 
 #[derive(Debug, Clone, Copy)]

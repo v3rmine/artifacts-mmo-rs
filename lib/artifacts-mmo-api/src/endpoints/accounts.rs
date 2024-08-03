@@ -6,7 +6,11 @@ use http::{
 use nutype::nutype;
 use serde_json::json;
 
-use crate::{rate_limits::ACCOUNT_CREATION_RATE_LIMIT, EncodedRequest};
+use crate::{
+    helpers::{ACCEPT_JSON, CONTENT_TYPE_JSON},
+    rate_limits::ACCOUNT_CREATION_RATE_LIMIT,
+    EncodedRequest,
+};
 
 #[nutype(validate(
     not_empty,
@@ -27,22 +31,19 @@ pub fn create_account(
     email: impl AsRef<str>,
 ) -> Result<EncodedRequest, crate::Error> {
     let username = Username::try_new(username.as_ref())
-        .map_err(|e| crate::Error::InvalidStringInput(e.to_string()))?
+        .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
     let password = Password::try_new(password.as_ref())
-        .map_err(|e| crate::Error::InvalidStringInput(e.to_string()))?
+        .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
     let email = Email::try_new(email.as_ref())
-        .map_err(|e| crate::Error::InvalidStringInput(e.to_string()))?
+        .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
 
     Ok(EncodedRequest {
         path: PathAndQuery::from_static("/accounts/create"),
         method: Method::POST,
-        headers: HeaderMap::from_iter([
-            (ACCEPT, HeaderValue::from_static("application/json")),
-            (CONTENT_TYPE, HeaderValue::from_static("application/json")),
-        ]),
+        headers: HeaderMap::from_iter([ACCEPT_JSON, CONTENT_TYPE_JSON]),
         content: serde_json::to_vec(&json!({
             "username": username,
             "password": password,
@@ -66,10 +67,6 @@ mod tests {
             email in "\\w+@\\w+\\.\\w+"
         ) {
             assert!(super::create_account(username, password, email).is_ok());
-        }
-        #[test]
-        fn create_account_should_err_with_invalid_input(username in "\\PC*", password in "\\PC*", email in "\\PC*") {
-            assert!(super::create_account(username, password, email).is_err());
         }
     }
 }

@@ -7,7 +7,7 @@ use http::{
     HeaderMap, HeaderValue, Method,
 };
 
-use crate::{rate_limits::TOKEN_RATE_LIMIT, EncodedRequest};
+use crate::{helpers::ACCEPT_JSON, rate_limits::TOKEN_RATE_LIMIT, EncodedRequest};
 
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/generate_token_token__post>
 #[tracing::instrument(level = "trace")]
@@ -16,7 +16,7 @@ pub fn generate_token(username: &str, password: &str) -> Result<EncodedRequest, 
         path: PathAndQuery::from_static("/token/"),
         method: Method::POST,
         headers: HeaderMap::from_iter([
-            (ACCEPT, HeaderValue::from_static("application/json")),
+            ACCEPT_JSON,
             (
                 AUTHORIZATION,
                 HeaderValue::from_str(
