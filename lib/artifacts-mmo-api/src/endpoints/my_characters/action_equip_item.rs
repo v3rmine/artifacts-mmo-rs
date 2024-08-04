@@ -40,7 +40,7 @@ pub fn action_equip_item(
 ) -> Result<EncodedRequest<ActionEquipItemRequest>, crate::Error> {
     Ok(EncodedRequest {
         method: Method::POST,
-        path: PathAndQuery::from_str(&format!("/my/{name}/action/move"))?,
+        path: PathAndQuery::from_str(&format!("/my/{name}/action/equip"))?,
         headers: HeaderMap::from_iter([
             ACCEPT_JSON,
             CONTENT_TYPE_JSON,
@@ -69,7 +69,7 @@ mod tests {
     use crate::schemas::{BearerToken, SlotTypeSchema};
     proptest! {
         #[test]
-        fn action_move_should_not_panic_with_valid_input(
+        fn action_equip_should_not_panic_with_valid_input(
             name in "[a-zA-Z0-9_-]+",
             code in "[a-zA-Z0-9_-]+",
         ) {

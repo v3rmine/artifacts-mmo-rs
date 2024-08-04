@@ -39,5 +39,10 @@ pub_mod_use! {
     destination_response,
     reason,
     slot_type,
-    equip_request
+    equip_request,
+    fight,
+    character_fight_data,
+    result,
+    drop,
+    blocked_hits
 }
