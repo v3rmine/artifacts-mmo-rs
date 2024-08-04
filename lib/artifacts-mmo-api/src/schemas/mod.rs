@@ -37,5 +37,7 @@ pub_mod_use! {
     character_movement_data,
     cooldown,
     destination_response,
-    reason
+    reason,
+    slot_type,
+    equip_request
 }
