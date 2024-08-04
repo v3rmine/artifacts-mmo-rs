@@ -8,8 +8,8 @@ use crate::{
     helpers::ACCEPT_JSON,
     rate_limits::DATA_RATE_LIMIT,
     schemas::{
-        ItemSchema, MonsterSchema, PaginatedResponseSchema, ResourceSchema, ResponseSchema,
-        SingleItemSchema, SkillSchema,
+        CraftSkillSchema, ItemSchema, ItemTypeSchema, MonsterSchema, PaginatedResponseSchema,
+        ResourceSchema, ResponseSchema, SingleItemSchema, SkillSchema,
     },
     EncodedRequest, ParseResponse,
 };
@@ -19,7 +19,7 @@ struct Page(u32);
 #[nutype(validate(greater_or_equal = 1, less_or_equal = 100))]
 struct Size(u32);
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
-struct Drop(String);
+struct CraftMaterial(String);
 
 #[derive(TypedBuilder)]
 struct GetAllItemsRequest {
@@ -28,7 +28,13 @@ struct GetAllItemsRequest {
     #[builder(default = 50)]
     size: u32,
     #[builder(default, setter(into))]
-    drop: Option<String>,
+    craft_material: Option<String>,
+    #[builder(default)]
+    craft_skill: Option<CraftSkillSchema>,
+    #[builder(default, setter(into))]
+    name: Option<String>,
+    #[builder(default)]
+    r#type: Option<ItemTypeSchema>,
     #[builder(default)]
     max_level: Option<u32>,
     #[builder(default)]
@@ -40,7 +46,10 @@ pub fn get_all_items(
     GetAllItemsRequest {
         page,
         size,
-        drop,
+        craft_material,
+        craft_skill,
+        name,
+        r#type,
         max_level,
         min_level,
     }: GetAllItemsRequest,
@@ -53,11 +62,20 @@ pub fn get_all_items(
         .into_inner();
 
     let mut query = Vec::new();
-    if let Some(drop) = drop {
-        let drop = Drop::try_new(drop)
+    if let Some(craft_material) = craft_material {
+        let craft_material = CraftMaterial::try_new(craft_material)
             .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
             .into_inner();
-        query.push(format!("drop={drop}"));
+        query.push(format!("craft_material={craft_material}"));
+    }
+    if let Some(craft_skill) = craft_skill {
+        query.push(format!("craft_skill={craft_skill}"));
+    }
+    if let Some(name) = name {
+        query.push(format!("name={name}"));
+    }
+    if let Some(r#type) = r#type {
+        query.push(format!("type={type}"));
     }
     if let Some(max_level) = max_level {
         query.push(format!("max_level={max_level}"));
@@ -65,7 +83,7 @@ pub fn get_all_items(
     if let Some(min_level) = min_level {
         query.push(format!("min_level={min_level}"));
     }
-    let path = format!("/monsters/?page={page}&size={size}&{}", query.join("&"));
+    let path = format!("/items/?page={page}&size={size}&{}", query.join("&"));
 
     Ok(EncodedRequest {
         method: Method::GET,
@@ -100,7 +118,7 @@ pub fn get_item(
 
     Ok(EncodedRequest {
         method: Method::GET,
-        path: PathAndQuery::from_str(&format!("/monsters/{code}"))?,
+        path: PathAndQuery::from_str(&format!("/items/{code}"))?,
         headers: HeaderMap::from_iter([ACCEPT_JSON]),
         content: Vec::new(),
         rate_limit: DATA_RATE_LIMIT,

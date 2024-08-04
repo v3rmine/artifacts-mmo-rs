@@ -2,6 +2,7 @@ use std::{marker::PhantomData, str::FromStr};
 
 use http::{uri::PathAndQuery, HeaderMap, Method};
 use nutype::nutype;
+use typed_builder::TypedBuilder;
 
 use crate::{
     helpers::ACCEPT_JSON,
@@ -17,16 +18,32 @@ struct Size(u32);
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
 struct Drop(String);
 
-struct GetAllResourcesRequest;
+#[derive(TypedBuilder)]
+struct GetAllResourcesRequest {
+    #[builder(default = 1)]
+    page: u32,
+    #[builder(default = 50)]
+    size: u32,
+    #[builder(default, setter(into))]
+    drop: Option<String>,
+    #[builder(default)]
+    max_level: Option<u32>,
+    #[builder(default)]
+    min_level: Option<u32>,
+    #[builder(default)]
+    skill: Option<SkillSchema>,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_all_resources_resources__get>
 #[tracing::instrument(level = "trace")]
 pub fn get_all_resources(
-    drop: Option<&str>,
-    max_level: Option<u32>,
-    min_level: Option<u32>,
-    skill: Option<SkillSchema>,
-    page: u32,
-    size: u32,
+    GetAllResourcesRequest {
+        page,
+        size,
+        drop,
+        max_level,
+        min_level,
+        skill,
+    }: GetAllResourcesRequest,
 ) -> Result<EncodedRequest<GetAllResourcesRequest>, crate::Error> {
     let page = Page::try_new(page)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
@@ -70,10 +87,16 @@ impl<'de> ParseResponse<'de> for EncodedRequest<GetAllResourcesRequest> {
 #[nutype(validate(regex = "^[a-zA-Z0-9_-]+$"))]
 struct Code(String);
 
-struct GetResourceRequest;
+#[derive(TypedBuilder)]
+struct GetResourceRequest {
+    #[builder(setter(into))]
+    code: String,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/get_resources_resources__code__get>
 #[tracing::instrument(level = "trace")]
-pub fn get_resource(code: &str) -> Result<EncodedRequest<GetResourceRequest>, crate::Error> {
+pub fn get_resource(
+    GetResourceRequest { code }: GetResourceRequest,
+) -> Result<EncodedRequest<GetResourceRequest>, crate::Error> {
     let code = Code::try_new(code)
         .map_err(|e| crate::Error::InvalidInput(e.to_string()))?
         .into_inner();
@@ -101,13 +124,20 @@ mod tests {
             page in 1u32..=u32::MAX,
             size in 1u32..=50,
         ) {
-            assert!(super::get_all_resources(None, None, None, None, page, size).is_ok());
+            let request = super::GetAllResourcesRequest::builder()
+                .page(page)
+                .size(size)
+                .build();
+            assert!(super::get_all_resources(request).is_ok());
         }
         #[test]
         fn get_resource_should_work_with_valid_input(
             code in "[a-zA-Z0-9_-]+"
         ) {
-            assert!(super::get_resource(&code).is_ok());
+            let request = super::GetResourceRequest::builder()
+                .code(code)
+                .build();
+            assert!(super::get_resource(request).is_ok());
         }
     }
 }

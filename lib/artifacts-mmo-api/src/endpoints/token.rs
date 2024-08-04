@@ -6,18 +6,24 @@ use http::{
     uri::PathAndQuery,
     HeaderMap, HeaderValue, Method,
 };
+use typed_builder::TypedBuilder;
 
 use crate::{
     helpers::ACCEPT_JSON, rate_limits::TOKEN_RATE_LIMIT, schemas::TokenSchema, EncodedRequest,
     ParseResponse,
 };
 
-struct GenerateTokenRequest;
+#[derive(TypedBuilder)]
+struct GenerateTokenRequest {
+    #[builder(setter(into))]
+    username: String,
+    #[builder(setter(into))]
+    password: String,
+}
 /// SOURCE: <https://api.artifactsmmo.com/docs/#/operations/generate_token_token__post>
 #[tracing::instrument(level = "trace")]
 pub fn generate_token(
-    username: &str,
-    password: &str,
+    GenerateTokenRequest { username, password }: GenerateTokenRequest,
 ) -> Result<EncodedRequest<GenerateTokenRequest>, crate::Error> {
     Ok(EncodedRequest {
         path: PathAndQuery::from_static("/token/"),
@@ -47,7 +53,11 @@ mod tests {
     proptest! {
         #[test]
         fn generate_token_should_not_panic(username in "\\PC*", password in "\\PC*") {
-            assert!(super::generate_token(&username, &password).is_ok());
+            let request = super::GenerateTokenRequest::builder()
+                .username(username)
+                .password(password)
+                .build();
+            assert!(super::generate_token(request).is_ok());
         }
     }
 }

@@ -24,5 +24,12 @@ pub_mod_use! {
     single_item,
     item_effect,
     craft,
-    simple_item
+    craft_skill,
+    simple_item,
+    item_type,
+    map,
+    map_content,
+    map_content_type,
+    character,
+    inventory_slot
 }
