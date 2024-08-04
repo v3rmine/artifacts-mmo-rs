@@ -32,9 +32,10 @@ pub fn generate_token(
             ACCEPT_JSON,
             (
                 AUTHORIZATION,
-                HeaderValue::from_str(
-                    &base64::prelude::BASE64_STANDARD.encode(format!("{username}:{password}")),
-                )?,
+                HeaderValue::from_str(&format!(
+                    "Basic {}",
+                    base64::prelude::BASE64_STANDARD.encode(format!("{username}:{password}"))
+                ))?,
             ),
         ]),
         content: Vec::new(),

@@ -13,6 +13,7 @@ use typed_builder::TypedBuilder;
 use crate::{
     helpers::{ACCEPT_JSON, CONTENT_TYPE_JSON},
     rate_limits::ACCOUNT_CREATION_RATE_LIMIT,
+    schemas::MessageSchema,
     EncodedRequest, ParseResponse,
 };
 
@@ -67,13 +68,8 @@ pub fn create_account(
     })
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct CreateAccountResponse {
-    pub message: String,
-}
-
 impl<'de> ParseResponse<'de> for EncodedRequest<CreateAccountRequest> {
-    type Response = CreateAccountResponse;
+    type Response = MessageSchema;
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@ macro_rules! pub_mod_use {
 }
 
 pub_mod_use! {
-    server,
+    get_status,
     my_characters,
     my_account,
     characters,

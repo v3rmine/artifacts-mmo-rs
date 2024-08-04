@@ -31,5 +31,11 @@ pub_mod_use! {
     map_content,
     map_content_type,
     character,
-    inventory_slot
+    inventory_slot,
+    gold,
+    message,
+    character_movement_data,
+    cooldown,
+    destination_response,
+    reason
 }
